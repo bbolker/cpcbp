@@ -1,0 +1,1 @@
+Code for common principal components and back-projection.  Currently in transition from old version based on Patrick Phillips' C code (with IP encumbrances due to Numerical Recipes routines) to a new version based on an implementation by Alan Wong of the Flury-Gautschi algorithms.
