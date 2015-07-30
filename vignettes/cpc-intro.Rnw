@@ -1,0 +1,83 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc} % for UTF-8/single quotes from sQuote()
+\author{Mike McCoy}
+\date{\today}
+\title{Introduction to R and the CPCBP package}
+%\VignetteIndexEntry{Introduction to CPC/BP}
+\newcommand{\code}[1]{{\tt #1}}
+\begin{document}
+\maketitle
+
+Load the package:
+<<>>=
+library(cpcbp)
+@ 
+
+Set the random number seed (to make
+all results identical across sessions):
+<<>>=
+set.seed(1001)
+@ 
+
+First simulate data.
+\code{simdata} creates identically shaped but offset multivariate normal groups.
+The data file \code{x} below is representative of data for 3 traits that are
+offset along the 1st principal component axis by 2 units and the 2nd principal component axis by 5 units.
+
+<<>>=
+x=simdata(offset=2,offset2=5)
+@ 
+
+\code{x} is structured so that the data are in 4 columns.
+The first 3 simulate log transformed morphometric data
+The fourth is a factor (e.g., predator or no-predator)
+Use \code{str} to view the structure of the data
+
+<<>>=
+str(x)
+@ 
+
+To view all pairwise correlations use \code{plot\_multigrp}.
+If \code{x} is a list of the data matrix and a grouping factor
+(i.e., as produced by \code{simdata} then you can just
+give it as a single argument to \code{plot\_multigrp}:
+in this case \verb+plot\_multigrp(x$data,x$f)+ would
+produce the same answer.  This convention holds for
+all of the functions in the package.
+<<fig=TRUE>>=
+plot_multigrp(x)
+@ 
+
+Next test to determine if groups share the first CPC in common.  The
+null hypothesis for this test is that the PC1s are shared so a
+significant pvalue tells you that the within groups PC1s
+are not shared; this
+is equivalent to heterogeneous slopes in ANCOVA.
+
+<<>>=
+phillips.cpc(x)
+@ 
+
+In this example you should get a non-significant $p$-value.  This
+output also includes the vectors for CPC1.
+
+
+Now you can do the back projection (i.e. size correction) and test for
+differences among groups for the three traits:
+\code{bp.anova} provides a list of ANOVA tables, one for each trait.
+
+<<>>=
+bp.anova(x)
+@ 
+
+To see the mean differences
+among groups of the back projected (i.e. size-corrected) data for
+each trait, as well as the uncorrected (\code{sd.raw}) and error
+corrected (\code{sd.corr}) standard deviations, use \code{bp.means}:
+
+<<>>=
+bp.means(x)
+@ 
+
+\end{document}
+

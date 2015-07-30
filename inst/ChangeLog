@@ -1,0 +1,37 @@
+0.1.0 to 0.1.1:
+added cpc executable for Windows
+tried to sort out appropriate paths etc. for
+   working files for Windows/Unix
+small tweaks for different numbers of obs. per group,
+  NAs in data, etc.
+
+0.1.2: changed name to cpcbp
+changed default input format to numeric matrix
+plus factor
+added cpc.options(), replacing cpcvecfun
+renamed call.cpc() to phillips.cpc()
+renamed error.bp() to bp.error()
+added bp.means(), plot.dat.theor(), sim.theor()
+changed coverfun to return 1-alpha rather than alpha
+added missing crossterms to cov calculation (minor correction)
+allowed bpfun(x,f)
+
+0.1.3:
+changed return from phillips.cpc
+(now returns a list, allowing extensions)
+added detection of CPC1 vs unequal p-value to read.cpc
+added na.rm stuff
+
+0.1.4:
+version bump for R >=2.0.0
+
+0.1.4.1:
+fixed stupid doc inconsistencies etc.  version
+mismatch/corruption at some point??
+
+0.3: changed format of simulated data to a list of data and
+	grouping variable, changed most functions to allow
+	x to be passed this way
+     FIXED bp.error/bp.anova to be correct with multiple and/or
+	  unbalanced groups
+     added *bperr functions

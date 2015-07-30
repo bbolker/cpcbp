@@ -1,0 +1,351 @@
+\documentclass{article}
+\usepackage{amsmath,amsfonts}
+\title{CPC/back-projection error propagation}
+%\VignetteIndexEntry{Example and technical details for CPC/BP with error analysis}
+%\VignettePackage{cpcbp}
+\date{\today}
+\author{Ben Bolker}
+\begin{document}
+\newcommand{\pc}{\boldsymbol \beta}
+\newcommand{\pce}{\beta}
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\bibliographystyle{plain}
+\maketitle
+
+This vignette is a technical overview: see the {\tt cpc-intro}
+vignette for a more basic introduction to how to use the
+package.
+
+The problem here is to figure out how the error in estimating the
+common principal components of a set of data from multiple treatments
+propagates, and should be considered, when testing the differences
+between groups.
+
+Specifically: suppose we have two groups of individuals (e.g.
+prey exposed to predators and prey not exposed to predators) and
+a (multivariate) set of morphological measurements on each individual.
+We assume that there is some underlying allometry by which individuals
+that change in size will also change in shape as a result (assume some
+appropriate transformations, i.e. log transformation of all traits).
+We aim to separate out changes in \emph{shape} caused by phenotypic
+plasticity from changes that are simply due to changes in size.
+
+We'll do this by calculating common principal components (CPC) for
+within-group variation, back-projecting to eliminate the effects of
+the first CPC, and doing univariate or multivariate analyses of the
+resulting size-standardized traits separated by group.  A number of
+assumptions we'll make here are (1) within-group allometric variation
+in size-related traits is a good proxy for between-group variation;
+(2) the first CPC characterizes effects of size (e.g. it would help
+our case here if the first CPC had positive loadings for all traits);
+(3) it makes sense to remove the first CPC even if only the two
+variance-covariance matrices only have one PC in common.
+Generally, we'll use Phillips' program to calculate CPC even though in
+the special case of equal variance-covariance matrices we should get
+very similar (but not identical [??]) results by subtracting the
+within-group means of all traits from each trait, pooling the data,
+and calculating ordinary principal components (which is what I'll do
+here since I'm simply doing examples with known equal underlying VC
+matrices).
+
+Some of these concepts make more sense with $>2$ traits (e.g. some but
+not all PC in common), but I'm going to illustrate with two-trait
+examples for simplicity.
+
+<<>>=
+library(MASS)
+library(ellipse)
+library(cpcbp)
+@
+
+Now plot some pictures.
+I'm going to draw this twice, once with
+automatically scaled axes and once with
+equal-scaled axes, because automatically
+scaled axes give a quite misleading picture
+of the actual geometry \ldots
+
+Our first example is a null case: an offset along
+the first common principal component (size axis)
+only (only variables 1 and 2 are shown; we
+can also use {\tt plot\_multigrp} to plot all
+pairs).
+
+<<fig=TRUE>>=
+set.seed(1001)
+X1 = simdata(offset=6)
+T1 = sim.theor(offset=6)
+op = par(pty="s")
+plot_dat.theor(X1,vars=1:2,xlim=c(-12,12),
+              ylim=c(-12,12),theor=T1)
+par(op)
+@ 
+
+Or alternatively with a shape change --- an
+offset perpendicular to the size axis:
+<<fig=TRUE>>=
+X2 = simdata(offset=15,offset2=10,vars=c(20,20,20))
+T2 = sim.theor(offset=15,offset2=10,vars=c(20,20,20))
+op = par(pty="s")
+plot_dat.theor(X2,vars=1:2,xlim=c(-12,35),
+              ylim=c(-12,35),theor=T2)
+par(op)
+@
+
+The back-projection equation is:
+\begin{equation}
+\vec{x}_{b} = (\vec{1} - \pc_1 \pc^T_1) \vec{x},
+\end{equation}
+where $\vec{x}$ is a data vector (measurements of all traits for a
+single individual); $\pc_1$ is the first principal direction
+(eigenvector), scaled so that $\pc_1 \cdot \pc_1=1$.  To understand
+this formula, think about breaking up $(\pc_1 \pc^T_1)
+\vec{x}$.  The first multiplication ($\pc^T_1 \vec{x}$) projects
+$\vec{x}$ onto the first principal direction (calculating a scalar that
+is the score for the first principal component); the second (multiplying
+by $\pc_1$) translates this score back into the original
+coordinate system.
+
+As we now know, the error in calculating the back-projection
+matrix enters (or should enter) into the estimate of the
+error in the differences between groups.
+How do we account for this extra error?  In principle, we know how to
+compute the errors on any element of the eigenvector matrix (see
+\cite{Flury1988}, p. 82--83).  Specifically, (4.6) of \cite{Flury1988} tells us
+\begin{equation}
+\hat \theta_{jh}^{(i)} = r_i^{-1} \frac{\hat \lambda_{ij} \hat
+\lambda_{ih}}{(\hat \lambda_{ij}-\hat\lambda_{ih})^2},
+\end{equation}
+where $r_i = n_i/n$ (fraction of total data points in group $i$) and
+$\hat \lambda_{ij}$ is the estimate of the $j$th eigenvalue of group
+$i$'s variance-covariance matrix.  Given  $\hat \theta_{jh}^{(i)}$ we
+can calculate a harmonic mean
+\begin{equation}
+\hat \theta_{jh} = {\left( \sum_{i=1}^k
+\left(\hat \theta_{jh}^{(i)}\right)^{-1}
+\right)}^{-1}
+\end{equation}
+and find the large-sample estimate of the standard error of $\hat
+\beta_{mh}$
+to be
+\begin{equation}
+s(\hat\beta_{mh}) = \left( \frac{1}{n}  \sum_{j=1, j \neq h}^{p} \hat
+\theta_{jh} \hat \beta_{mj}^2 \right)^{1/2},
+\end{equation}
+or
+\begin{equation}
+\Sigma^2(\hat\beta) = 
+\frac{1}{n} \left(\hat \beta^2\right)^T \cdot \Theta,
+\end{equation}
+where $\Theta$ is $\theta_{ij}$ as above for $i\neq j$, 0 on the diagonal.
+
+More generally (see (2.5) from \cite{Flury1988}) we have that
+the variance-covariance matrix of the elements in $\pc_1$ is:
+\begin{equation}
+\frac{1}{n}  \sum_{j=1, j \neq h}^{p} \hat
+\theta_{1h} \pc_h \pc_h'
+\label{eq:pc1vcov}
+\end{equation}
+(eq. 2.5 provides a general variance-covariance expression
+for the elements of any principal component with any other
+principal component, but p.c. 1 is the only one we will
+be concerned with).
+Note that $\pc_h \pc_h'$ is the
+\emph{outer product} (a matrix) of $\pc_h$
+with itself \ldots there is probably some clever
+outer-product way to combine this whole expression into
+a single matrix/tensor operation in terms of $\Theta$
+and $\pc_h$, but it would just be more confusing.
+{\tt calc.cpcerr} in the {\tt cpcbp} library calculates
+the result of (\ref{eq:pc1vcov}).
+
+Now suppose we have calculated the error variances
+$\sigma^2_{\beta_{1j}}$ for each component of the first eigenvector.  Then
+the $(ij)$th element of the outer-product matrix $\pc_1
+\pc^T_1$ is $\beta_{1i} \beta_{1j}$.
+In general, the formula for combining the errors of two
+quantities is (from \cite{Lyons1991})
+\begin{equation}
+V(f(a,b)) \approx V(a) \left( \frac{\partial f}{\partial a} \right)^2
++ V(b) \left( \frac{\partial f}{\partial b} \right)^2
++ 2 C(a,b) \left( \frac{\partial f}{\partial a} \frac{\partial f}{\partial b} 
+\right),
+\end{equation}
+which equals 
+\begin{equation}
+V(a) b^2 + V(b) a^2
++ 2 C(a,b) ab = a^2 b^2 \left( \frac{V(a)}{a^2} + \frac{V(b)}{b^2}
+\right) + 2 C(a,b) ab
+\end{equation}
+if $f(a,b) = a \cdot b$.
+So the error variance of $\beta_{1i} \beta_{1j}$ is
+approximately 
+\begin{equation}
+\sigma^2_{\beta_{1i}\beta_{1j}} = (\beta_{1i}\beta_{1j})^2 \left( \frac{\sigma_{\beta_{1i}}^2}{\beta_{1i}^2} + \frac{\sigma_{\beta_{1j}}^2}{\beta_{1j}^2}
+\right) + 2 C(\beta_{1i},\beta_{1j}) \beta_{1i} \beta_{1j}
+\end{equation}
+
+We can write this in matrix formulation as well:
+Gentle, eq. 1.40 gives 
+\begin{equation}
+V(R) \approx J_g(\theta) V(T) ((J_g(\theta))^T,
+\end{equation}
+where $J$ is the Jacobian ($\partial g_i/\partial \theta_j$) 
+and $V$ represents the variance-covariance matrix.
+The Jacobian of $(\beta_{1i}\beta_{1j})$ is \ldots
+
+
+We also have to compute the \emph{covariances} of the elements of the back-projection matrix
+$b_{ij} = \beta_{1i} \beta_{1j}$ with each other --- but 
+we actually will only need to multiply $b_{ij}$ by $b_{ik}$, so 
+we only need ($\sigma_{b_{ij},b_{ik}}$)
+\footnote{\textbf{derivation:}
+We want $\sigma_{b_{ij},b_{ik}}=E[b_{ij} b_{ik}] - E[b_{ij}] E[b_{ik}]$.
+\begin{equation}
+\begin{split}
+ = & E[\beta_{1i} \beta_{1j} \cdot \beta_{1i} \beta_{1k}] - E[\beta_{1i} \beta_{1j}] \cdot E[\beta_{1i} \beta_{1k}] \\
+ = & (\bar \beta_{1i}^2 \bar \beta_{1j} \bar \beta_{1k} 
+ +  2 ( \bar \beta_{1i} \bar \beta_{1j} \sigma_{\beta_{1i},\beta_{1k}} 
+ + \bar \beta_{1i} \bar  \beta_{1k} \sigma_{\beta_{1i},\beta_{1j}} ) \\
+ & \mbox{} + {\bar \beta_{1i}}^2 \sigma_{\beta_{1j},\beta_{1k}} +
+  \bar \beta_{1j} \bar \beta_{1k} \sigma_{\beta_{1i}}^2) \\
+ & \mbox{} - (\bar \beta_{1i} \bar \beta_{1j} + \sigma_{\beta_{1i},\beta_{1j}})
+ \times (\bar \beta_{1i} \bar \beta_{1k} + \sigma_{\beta_{1i},\beta_{1k}}) \\
+ = & 2 ( \bar \beta_{1i} \bar \beta_{1j} \sigma_{\beta_{1i},\beta_{1k}} 
+ + \bar \beta_{1i} \bar  \beta_{1k} \sigma_{\beta_{1i},\beta_{1j}} ) 
+ + {\bar \beta_{1i}}^2 \sigma_{\beta_{1j},\beta_{1k}} + 
+  \bar \beta_{1j} \bar \beta_{1k} \sigma_{\beta_{1i}}^2 \\
+ & \mbox{} - \bar \beta_{1i} \bar \beta_{1j} \sigma_{\beta_{1i},\beta_{1k}} 
+ - \bar \beta_{1i} \bar \beta_{1k} \sigma_{\beta_{1i},\beta_{1j}} 
+ - \sigma_{\beta_{1i},\beta_{1j}} \sigma_{\beta_{1i},\beta_{1k}} 
+\end{split}
+\end{equation}
+(the last three cross terms were left out of the previous derivation).}
+\begin{equation}
+\begin{split}
+C_{b_{ij},b_{jk}} = & 2 \left( \beta_{1i} \beta_{1j} \sigma_{\beta_{1i},\beta_{1k}} +
+\beta_{1i} \beta_{1k} \sigma_{\beta_{1i},\beta_{1j}} \right) \\
+ & \mbox{} + {\beta_{1i}}^2 \sigma_{\beta_{1j},\beta_{1k}} + \beta_{1j} \beta_{1k} \sigma_{\beta_{1i}}^2
+\end{split}
+\end{equation}
+
+
+Call the back-projection matrix for variable $i$
+$\vec{b}_i$.
+
+Denote by $\vec{M}_i$ the matrix with $\sigma^2_{b_{1i}}$ on the diagonal
+and $C_{b_{ij},b_{jk}}$ as the off-diagonal elements --- this is
+the variance-covariance matrix of the back-projection vector
+for variable $i$.
+Then if $X_g$ is the vector of the back-projected means of
+the variables for a group,
+the back-projection variance 
+for this group is $\sigma^2_{ig,bp} = X_g^T M_i X_g$.
+If there are $n_g$ samples in group $g$, then
+the back-projection sum of squares for is
+$n_g^2 \sigma^2_{ig,bp}$; the total
+back-projection sum of squares is
+$\sum_{g=1}^{N_g} n_g^2 \sigma^2_{ig,bp}$;
+and the total error sum of squares is
+the sum of the within-group sums of squares
+(the within-group variance for each group,
+assumed to be equal, times the number of individuals
+in the group --- also assumed to be equal) and
+the BP sum of squares:
+$\sum_{g=1}^{N_g} n_g \sigma^2_{x_{ig}}+n_g^2 \sigma^2{ig,bp}$.
+
+%% EVERYTHING AFTER THIS POINT COMMENTED OUT: NEEDS TO
+%% BE UPDATED FOR NEW BPANOVA CALCS
+
+% This gives the combined variance for each group.  The normal t-score
+% for two groups would be $(\bar x_1-\bar x_2)/\sqrt{s^2_1+s^2_2}$
+% (where $s_1$ and $s_2$ are the standard errors of the mean); here we
+% would just want to replace the $s^2$ terms with the combined variances
+% given above, leaving the degrees of freedom the same.  For an ANOVA,
+% we add the back-projection sum of squares the error sum of squares would be equal to the combined errors
+% above ($\sum_i n_i \sigma^2_c(i)$).
+
+% On second thought \ldots I think the error sum of squares is 
+% $n_i^2 \sigma^2_{\vec b} + (n_i-1) \sigma^2_x$, which is
+% approximately (but not quite) $n_i^2 \sigma^2_c$ for each
+% group, so it might be better to just add the back-projection
+% sum of squares to the existing error sum of squares in an
+% existing {\tt anova} object: or is this too fancy?
+
+
+%\section{Tests}
+%Evaluating the methods:
+
+%Calculate back-projected values etc. and theoretical values:
+<<echo=FALSE,eval=FALSE>>=
+X2.bpm = bp.means(X2); X2.bpm
+tvals.m=sim.theor(offset=0,offset2=10,vars=c(20,20,20))$mean
+tvals.diff = tvals.m[2,]-tvals.m[1,]
+@ 
+
+%Difference from \emph{expected values} (two-tailed test):
+<<echo=FALSE,eval=FALSE>>=
+p2e = 2*pt(abs(X2.bpm$meandiffs-tvals.diff)/X2.bpm$sd.corr,nrow(X2)-2,
+  lower.tail=FALSE); p2e
+@ 
+
+%Difference from zero (two-tailed):
+<<echo=FALSE,eval=FALSE>>=
+p2z = 2*pt((abs(X2.bpm$meandiffs))/X2.bpm$sd.corr,nrow(X2)-2,
+  lower.tail=FALSE); p2z
+@ 
+
+%Comparing the ANOVA results:
+<<echo=FALSE,eval=FALSE>>=
+b2 = bp.anova(X2)
+p1b2 = sapply(b2,function(x)x[1,"Pr(>F)"]); p1b2
+@ 
+
+%Comparing the results of the $t$-test (two-tailed test vs. zero) and
+% the $F$-test shows that yes, we're doing approximately the same thing
+% (I may be off by one degree of freedom or so).
+
+% Now do it for the null case:
+<<echo=FALSE,eval=FALSE>>=
+X1.bpm = bp.means(X1); X1.bpm
+tvals.m=sim.theor(offset=0,offset2=0)$mean
+tvals.diff = tvals.m[2,]-tvals.m[1,]
+p1z = 2*pt((abs(X1.bpm$meandiffs))/X1.bpm$sd.corr,nrow(X1)-2,
+  lower.tail=FALSE)
+b1 = bp.anova(X1)
+p1b1 = sapply(b1,function(x)x[1,"Pr(>F)"])
+rbind(p1z,p1b1)
+@ 
+
+% Now write a function to do this many times to test
+% the \emph{coverage}:
+<<echo=FALSE,eval=FALSE>>=
+testcover = function(n=400,offset=15,offset2=10,vars=c(20,20,20),cor=0.8,rpt=50) {
+  tvals.m=sim.theor(offset=0,offset2=offset2,vars=vars,cor=cor)$mean
+  tvals.diff = tvals.m[2,]-tvals.m[1,]
+  pvals = t(sapply(1:n,
+    function(x) {
+      if (rpt >0 && x %% rpt==0) cat(x,"\n")
+      x1t<-simdata(offset=offset,offset2=offset2,vars=vars,cor=cor)
+      x1t.bp = bp.means(x1t)
+      2*pt(abs(x1t.bp$meandiffs-tvals.diff)/x1t.bp$sd.corr,nrow(x1t)-2,
+           lower.tail=FALSE)
+    }))
+  c(apply(pvals,2,coverfun),coverfun(pvals))
+}
+@ 
+
+<<echo=FALSE,eval=FALSE>>=
+testcov = TRUE
+if (testcov) testcover()
+@ 
+
+% Result: yes, we have close to nominal (95\%) coverage
+% (for this particular case): we've checked a lot of other
+% cases.
+
+\bibliography{cpcbp}
+
+\end{document}
+
+

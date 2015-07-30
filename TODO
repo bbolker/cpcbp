@@ -1,0 +1,19 @@
+allow use with multiple factors? (if is.list(f), construct joint factor)
+more complicated designs generally?
+
+formula interface (bpfun(x~f1*f2))?
+
+write native CPC code??
+
+code to check CPC output for common CPC1/warn
+
+extensive power/coverage testing
+
+update vignette for new (corrected) bp error/anova algorithm
+
+test null-hypothesis simulator 
+
+explore Phillips CPC1 rejection issue??
+
+something hangs on doubly back-projected (= perfectly
+correlated) data
