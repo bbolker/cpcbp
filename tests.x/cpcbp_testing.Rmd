@@ -1,0 +1,63 @@
+---
+title: "cpcbp_comparison"
+author: "Mike Li"
+date: "September 15, 2015"
+output: html_document
+---
+
+Fixed our pool cpc... we orginally have a dividing problem when we were pooling the cov...
+
+Run newphil.R to aviod using data... only require covs and npts to run.
+
+Phillips pool eigen values are not ordered (bp problem if highest eigenvalue is interested because our 
+bp code takes first eigen vector as default)
+This does not concern us at all because our pool cpc is ""correct"" (consistent with eigen value ordering) 
+---
+
+test_examples
+-------------
+
+Bank data: 
+- full cpc ok 
+-(OUR) partial cpc does not select the highest eigenvalue implies the constrained eigen value is not right. 
+
+Iris data: 
+-full cpc ok 
+-partial cpc a little off + 3rd cov one sign off (Phillips)  (2 out of 4 cpc)
+-partial cpc does not order after the first one for one common pc (1 out of 4) diddo
+
+Marten data: 
+-full cpc ok (eval ordering is kind of off, resulting in minor variations in numbers. BUT (not 100% sure), 
+it SHOULD not affect the estimated population cov because it is being multiplied with the corresponding eigen vaules and vectors.
+
+-partial cpc does not select the highest eigenvalue... it matters because it affacts which eigenvector constrain 
+to be the same (1 out of 4) diddo
+
+-partial cpc (2 out of 4) diddo
+
+
+Turtle data:
+-full cpc ok
+-partial cpc ok but numbers are a little off
+
+Vole data:
+-full cpc ok.. a little off 
+- partial cpc ok ... 
+
+
+
+```{r, echo=TRUE, verbose=FALSE, warning= FALSE}
+
+library(cpcbp)
+source("newphil.R")
+source("mikecpc.R")
+source("test_examples.R")
+
+newphil(x,test_bank,n_bank)$datlist[[3]]
+mikecpc(test_bank,n_bank,1)
+
+newphil(x,test_marten,n_marten)$datlist[[2]]
+mikecpc(test_marten,n_bank,2)
+
+
+```
