@@ -11,8 +11,8 @@ mikecpc <- function(covs,npts,ncp=(ncol(covs[[1]])-1)){
     ## Flury eq. 1.20, p. 70; cov[[j]]==S_j
     mlist$evals[[j]] <- diag(t(mlist$evecs[[j]]) %*% covs[[j]] %*% mlist$evecs[[
 j]])
-    mlist$cov[[j]] <- mlist$evecs[[j]] %*% diag(mlist$evals[[j]])  %*% t(mlist$e
-vecs[[j]])}
+    mlist$cov[[j]] <- mlist$evecs[[j]] %*% diag(mlist$evals[[j]])  %*%
+        t(mlist$evecs[[j]])}
   return(mlist)
 }
 
@@ -42,9 +42,8 @@ fullcpc <- function(covs,npts,ncp=(ncol(covs[[1]])-1)){
     mlist$chisqtest <- matrix(c(cpcchisq(cpclist[[ncp]]$cov,cpclist[[n]]$cov,npts), 
   "df","pval"),nrow=1,ncol=3)}
   if(ncp > 1){
-    mlist$chisqtest <- matrix(1,nrow=ncp,ncol=3)
-    mlist$chisqtest[,2] <- "df"
-    mlist$chisqtest[,3] <- "pval"
+    mlist$chisqtest <- data.frame(statistic=rep(1,ncp),df=NA,pval=NA)
+
     for(i in 1:(ncp-1)){
       mlist$chisqtest[i,1] <-  cpcchisq(cpclist[[ncp]]$cov,cpclist[[ncp-i]]$cov,npts)
     }
