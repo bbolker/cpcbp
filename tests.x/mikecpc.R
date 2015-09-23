@@ -48,7 +48,7 @@ fullcpc <- function(covs,npts,ncp=(ncol(covs[[1]])-1)){
   cpclist[[n]]$cov <- covs
   if(ncp == 1){
     mlist$chisqtest <- data.frame(statistic = cpcchisq(cpclist[[ncp]]$cov,cpclist[[n]]$cov,npts), 
-  df = cpclist[[ncp]]$par - arbpar , pval = NA)}
+  df = arbpar - cpclist[[ncp]]$par, pval = NA)}
   if(ncp > 1){
     mlist$chisqtest <- data.frame(statistic=rep(1,ncp),df=NA,pval=NA)
 
@@ -57,7 +57,7 @@ fullcpc <- function(covs,npts,ncp=(ncol(covs[[1]])-1)){
       mlist$chisqtest[i,2] <- cpclist[[ncp]]$par - cpclist[[ncp-i]]$par
     }
     mlist$chisqtest[ncp,1] <- cpcchisq(cpclist[[ncp]]$cov,cpclist[[n]]$cov,npts)
-    mlist$chisqtest[ncp,2] <- cpclist[[ncp]]$par - arbpar} 
+    mlist$chisqtest[ncp,2] <- arbpar - cpclist[[ncp]]$par} 
                             
   
   return(mlist)
