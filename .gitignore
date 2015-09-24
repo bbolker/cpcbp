@@ -11,3 +11,8 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+vignettes/*.tex
+vignettes/*.bbl
+vignettes/*.out
+vignettes/*.log
+vignettes/*.aux
