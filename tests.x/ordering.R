@@ -1,6 +1,18 @@
 source("mikecpc.R")
 ff <- fullcpc(test_marten,n_marten)
 ff2 <- fullcpc(test_marten,n_marten,2)
+
+evals <- function(mat){
+  aa <- lapply(mat,eigen)
+  ## a <- lapply(aa,"[[","values")
+  a <- list()
+  for(i in 1:length(mat)){
+    a[[i]] <- aa[[i]]$values
+  }
+  return(a)
+  
+}
+
 hmean <- function(L) {
     ## harmonic mean of a list of vectors
     inv <- lapply(L,function(x) 1/x)

@@ -1,7 +1,7 @@
 library(cpcbp)
 
 ##phillips cpc without dataset... only takes in the list of covs 
-newphil <- function (x,covs, npts, progdir, progname, ansfn, datfn, 
+newphil <- function (x=x,covs, npts, progdir, progname, ansfn, datfn, 
                      outfn, unlink.temp = TRUE, use = "complete.obs", verbose = FALSE){ 
   
   tmpdirf = function(x, base) {
