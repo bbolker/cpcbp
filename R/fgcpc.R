@@ -1,3 +1,4 @@
+require(FGalgorithm)
 ##fgwrapper 
 fgcpc <- function(covs,n){
   p <- nrow(covs[[1]])
