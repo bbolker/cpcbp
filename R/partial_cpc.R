@@ -14,7 +14,7 @@
 ##' @references Flury Book 1988
 ##' @examples partial_cpc(test_vole,n_vole,q=1,B=new_cpc(matList,n),alpha_stop=0.001)
 ##' @export
-fgpartial_cpc <- function(matList,n,q,B=fgcpc(matList,n)$evecs[[1]],alpha_stop=0.001) {
+partial_cpc <- function(matList,n,q,B=cpc(matList,n)$evecs[[1]],alpha_stop=0.001) {
   debug <- FALSE
   p <- nrow(matList[[1]])  ## matrix dimensions
   k <- length(matList)     ## number of matrices

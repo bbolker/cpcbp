@@ -1,30 +1,17 @@
-hmean <- function(L){
-    ## harmonic mean of a list of vectors
-    inv <- lapply(L,function(x) 1/x)
-    ## compress lists into a matrix, compute means, invert ...
-    1/rowMeans(do.call(cbind,inv))
-}
 
-reorder.ee <- function(x) {
-    oo <- order(hmean(x$evals),decreasing=TRUE)
-    ordfun <- function(x) {
-        if (is.matrix(x)) x[,oo] else x[oo]
-    }
-    ## reorder all elements of all elements
-    ## (evecs, evals) -> (by group)
-    ## in decreasing order of harmonic mean
-    for (e in c("evecs","evals")) {
-        x[[e]] <- lapply(x[[e]], ordfun)
-    }
-    return(x)
+cpc <- function(covs,n){
+  p <- nrow(covs[[1]])
+  ncov <- length(covs)
+  mlist <- list()
+  for(i in 1:ncov){
+    mlist$evecs[[i]] <- FGalgorithm(1e-6,1e-6,p,n,covs)
+  }
+  for(j in 1:ncov){ 
+    ## Flury eq. 1.20, p. 70; cov[[j]]==S_j
+    mlist$evals[[j]] <- diag(t(mlist$evecs[[j]]) %*% covs[[j]] %*% mlist$evecs[[j]])
+  }
+  return(reorder.ee(mlist)$evecs)
 }
-
-cpc <- function(cov,n){
-  common <- nrow(cov[[1]])
-  temp <- partial_cpc(cov,n,q=common-1,B=(diag(common)))
-  return(partial_cpc(cov,n,q=common-1,B=temp[[1]]))
-}
-
 
 cpcchisq <- function(cov1,cov2,npts){
   num <- sapply(cov1,det)
@@ -39,11 +26,10 @@ cpc_object <- function(covs,npts,ncp=NULL){
   p <- nrow(covs[[1]])
   k <- length(covs)
   full <- cpc(covs,npts)
-  temp <- full[[1]]
   if(ncp == (p-1)){
     mlist$evecs <- full
     mlist$par <- p*(p-1)/2 + k*p}
-  else{mlist$evecs <- partial_cpc(covs,npts,q=ncp,B=temp)
+  else{mlist$evecs <- partial_cpc(covs,npts,q=ncp)
   mlist$par <- p*(p-1)/2 + k*p + (k-1)*(p-ncp)*(p-ncp-1)/2}
   mlist$evals <- list()
   mlist$cov <- list()
@@ -76,7 +62,7 @@ cpc_LRT <- function(cpc1,cpc2=NULL,covs,npts){
  }
 
 
-mikepoolcpc <- function(covs,npts){
+poolcpc <- function(covs,npts){
   mlist <- list()
   poolvar <- Reduce('+',mapply('*',covs,(npts-1),SIMPLIFY = FALSE))/(sum(npts)-length(npts))
   mlist$evals <- diag(t(eigen(poolvar)$vectors) %*% poolvar %*% eigen(poolvar)$vectors)
