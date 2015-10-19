@@ -4,7 +4,7 @@ Version: 0.3.3
 Date: 2012/06/08
 Author: Ben Bolker, Patrick C. Phillips
 Maintainer: Ben Bolker <bolker@mcmaster.ca>
-Depends: R (>= 2.0.0), MASS, lattice
+Depends: R (>= 2.0.0), MASS, lattice, FGalgorithm
 Suggests: ellipse
 LazyData: yes
 SystemRequirements: includes binaries that run only on Windows and (some) Linux versions. For other platforms, please contact the maintainer.
