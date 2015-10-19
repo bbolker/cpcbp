@@ -21,7 +21,8 @@ reorder.ee <- function(x) {
 
 cpc <- function(cov,n){
   common <- nrow(cov[[1]])
-  return(partial_cpc(cov,n,q=common-1,B=(diag(common))))
+  temp <- partial_cpc(cov,n,q=common-1,B=(diag(common)))
+  return(partial_cpc(cov,n,q=common-1,B=temp[[1]]))
 }
 
 
@@ -32,16 +33,18 @@ cpcchisq <- function(cov1,cov2,npts){
   return(ll)
 }
 
-cpc_object <- function(covs,npts,ncp=NULL){
+cpc_object <- function(covs,npts,ncp=NULL,methods="cpc"){
   if(is.null(ncp))(ncp=nrow(covs[[1]])-1)
   mlist <- list()
   p <- nrow(covs[[1]])
   k <- length(covs)
   full <- cpc(covs,npts)
+  temp <- full[[1]]
+  if(methods=="fg"){temp <- FGalgorithm(1e-6,1e-6,p,npts,covs)}
   if(ncp == (p-1)){
     mlist$evecs <- full
     mlist$par <- p*(p-1)/2 + k*p}
-  else{mlist$evecs <- partial_cpc(covs,npts,q=ncp,B=full[[1]])
+  else{mlist$evecs <- partial_cpc(covs,npts,q=ncp,B=temp)
   mlist$par <- p*(p-1)/2 + k*p + (k-1)*(p-ncp)*(p-ncp-1)/2}
   mlist$evals <- list()
   mlist$cov <- list()
