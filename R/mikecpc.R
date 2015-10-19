@@ -33,14 +33,13 @@ cpcchisq <- function(cov1,cov2,npts){
   return(ll)
 }
 
-cpc_object <- function(covs,npts,ncp=NULL,methods="cpc"){
+cpc_object <- function(covs,npts,ncp=NULL){
   if(is.null(ncp))(ncp=nrow(covs[[1]])-1)
   mlist <- list()
   p <- nrow(covs[[1]])
   k <- length(covs)
   full <- cpc(covs,npts)
   temp <- full[[1]]
-  if(methods=="fg"){temp <- FGalgorithm(1e-6,1e-6,p,npts,covs)}
   if(ncp == (p-1)){
     mlist$evecs <- full
     mlist$par <- p*(p-1)/2 + k*p}
