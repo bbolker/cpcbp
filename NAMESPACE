@@ -15,8 +15,6 @@ export(
        cpc_object,
        cpc_LRT,
        cpc.options,
-       fgcpc,
-       fgpartial_cpc,
        h_cpc,
        h_many,
        h_one,
