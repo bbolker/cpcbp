@@ -11,14 +11,22 @@
 ##' @param q the first q components to be kept
 ##' @param B CPC matrix
 ##' @param alpha_stop stopping value for small adjustments by jacobi rotations
+##' @param oldstyle back-compatibility switch (to be removed eventually)
 ##' @references Flury Book 1988
 ##' @examples partial_cpc(test_vole,n_vole,q=1,B=new_cpc(matList,n),alpha_stop=0.001)
 ##' @export
-partial_cpc <- function(matList,n,q,B=cpc(matList,n)$evecs[[1]],alpha_stop=0.001) {
+partial_cpc <- function(matList,n,q,
+                        B=NULL, alpha_stop=0.001,
+                        oldstyle=FALSE) {
   debug <- FALSE
   p <- nrow(matList[[1]])  ## matrix dimensions
   k <- length(matList)     ## number of matrices
-  
+
+  if (oldstyle) {
+      B <- new_cpc(matList,n)
+  } else {
+      B <- cpc(matList,n)$evecs[[1]]
+  }
   
   ##kinda looks like a quadratic form-ish
   quad <- function(X,B) t(B) %*% X %*% B
@@ -46,10 +54,15 @@ partial_cpc <- function(matList,n,q,B=cpc(matList,n)$evecs[[1]],alpha_stop=0.001
     for (i in 1:k) {
       spareList[[i]]=quad(matList[[i]],B1_star)
     }
-    if(nrow(spareList[[1]]) > 1){
-      Q=FGalgorithm(1e-6,1e-6,nrow(spareList[[1]]),rep(1,length(spareList)),spareList)}
-    else{Q = matrix(1)}
-    
+    if (oldstyle) {
+        ## use Alan Wong's code
+        Q=new_cpc(spareList)
+    } else {
+        if(nrow(spareList[[1]]) > 1){
+            Q=FGalgorithm(1e-6,1e-6,nrow(spareList[[1]]),
+            rep(1,length(spareList)),spareList)}
+        else{Q = matrix(1)}
+    }
     B1_plus=B1_star%*%Q
     
     gvalue=matrix(0,k)
@@ -136,9 +149,14 @@ partial_cpc <- function(matList,n,q,B=cpc(matList,n)$evecs[[1]],alpha_stop=0.001
   for (i in 1:k) {
     spareList[[i]]=quad(matList[[i]],B1_star)
   }
-  if(nrow(spareList[[1]]) > 1){
-    Q=FGalgorithm(1e-6,1e-6,nrow(spareList[[1]]),rep(1,length(spareList)),spareList)}
-  else{Q = matrix(1)}
+  if (oldstyle) {
+      ## use Alan Wong's code
+      Q=new_cpc(spareList)
+  } else {
+      if(nrow(spareList[[1]]) > 1){
+          Q=FGalgorithm(1e-6,1e-6,nrow(spareList[[1]]),rep(1,length(spareList)),spareList)}
+      else{Q = matrix(1)}
+  }
   B1_plus=B1_star%*%Q
   
   Blist=matList
